@@ -21,7 +21,6 @@ namespace GameSync
             initConfig();
             initClient();
             makeApiCall(userConfig.nextcloud.username + "/");
-
         }
 
         private void initConfig()
@@ -30,18 +29,20 @@ namespace GameSync
             {
                 bool changes = false;
                 string jsonString = File.ReadAllText(userConfigPath);
-                if (string.IsNullOrWhiteSpace(jsonString)) { 
+                if (string.IsNullOrWhiteSpace(jsonString))
+                {
                     getCredentials();
                     getUrl();
                     saveConfig();
                 }
                 else
                 {
-                    if (!jsonString.StartsWith("{") && !jsonString.StartsWith("[")) {
+                    if (!jsonString.StartsWith("{") && !jsonString.StartsWith("["))
+                    {
                         getCredentials();
                         getUrl();
                         saveConfig();
-                     }
+                    }
                     else
                     {
                         try
@@ -51,8 +52,7 @@ namespace GameSync
                             {
                                 if (userConfig.nextcloud.hasCredentials())
                                 {
-                                    nextcloudCredentials = new NetworkCredential(userConfig.nextcloud.username, userConfig.nextcloud.password);
-                                    // should just read processed string
+                                    nextcloudCredentials = userConfig.nextcloud.generateCredentials();
                                 }
                                 else
                                 {
@@ -73,7 +73,7 @@ namespace GameSync
                             else
                             {
                                 getCredentials();
-                                getUrl();    
+                                getUrl();
                                 changes = true;
                             }
 
@@ -99,17 +99,19 @@ namespace GameSync
         }
         private void getUrl()
         {
-            userConfig.nextcloud.url = "https://nextcloud.neshura-server.net/remote.php/dav/files/";
-            uri = new Uri("https://nextcloud.neshura-server.net/remote.php/dav/files/");
+            Console.WriteLine("Enter Nextcloud URL:");
+            userConfig.nextcloud.url = Console.ReadLine();
+            uri = new Uri(userConfig.nextcloud.url);
         }
 
         private void getCredentials()
         {
             Console.WriteLine("Enter Nextcloud Username:");
             userConfig.nextcloud.username = Console.ReadLine();
+            
             Console.WriteLine("Enter Nextcloud Password:");
-            userConfig.nextcloud.password = Console.ReadLine();
-            nextcloudCredentials = new NetworkCredential(userConfig.nextcloud.username, userConfig.nextcloud.password);
+            userConfig.nextcloud.plainPassword =  Console.ReadLine();
+            nextcloudCredentials = userConfig.nextcloud.generateCredentials();
         }
         private void saveConfig()
         {
