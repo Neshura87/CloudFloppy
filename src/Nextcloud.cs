@@ -16,12 +16,11 @@ class Nextcloud
 
 	private Uri uri;
 
-	public Nextcloud()
-	{
-		initConfig();
-		initClient();
-		makeApiCall(userConfig.nextcloud.username + "/");
-	}
+        public Nextcloud()
+        {
+            initConfig();
+            initClient();
+        }
 
 	private void initConfig()
 	{
@@ -100,7 +99,8 @@ class Nextcloud
 	private void getUrl()
 	{
 		Console.WriteLine("Enter Nextcloud URL:");
-		userConfig.nextcloud.url = Console.ReadLine();
+		// set used URL to include username to reduce complexity during API calls
+		userConfig.nextcloud.url = Console.ReadLine() + userConfig.nextcloud.username + "/";
 		uri = new Uri(userConfig.nextcloud.url);
 	}
 
@@ -129,15 +129,90 @@ class Nextcloud
 			// write userConfig as JSON to file
 		}
 	}
-	private void makeApiCall(string path)
+	public List<NextcloudObject> Find(string path)
 	{
-		PropfindResponse res = nextCloudClient.Propfind(path).Result;
+		List<NextcloudObject> found = new List<NextcloudObject>();
+		var propfindParams = new PropfindParameters{
+                RequestType = PropfindRequestType.NamedProperties,
+                CustomProperties = new XName[] {
+                    "{DAV:}getlastmodified",
+                    "{DAV:}getetag",
+                    "{http://owncloud.org/ns}id",
+                    "{http://owncloud.org/ns}fileid"
+                },
+                Namespaces = new[] {
+                    new NamespaceAttr("oc", "http://owncloud.org/ns")
+                }
+		};
+            var call = nextCloudClient.Propfind(path, propfindParams);
+            //call.Start();
+            while (!call.IsCompleted)
+            {
+                Console.Write(".");
+                Thread.Sleep(200);
+            }
+            Console.WriteLine();
+
+            PropfindResponse res = call.Result;
 
 		foreach (WebDavResource entry in res.Resources)
 		{
-			Console.WriteLine("## " + entry.Uri + "|" + entry.ContentType + "|" + entry.LastModifiedDate + " ##");
+			NextcloudObject obj = new NextcloudObject(entry);
+			found.Add(obj);
 		}
+		return found;
 	}
+
+        public void Sync(System.IO.FileInfo file)
+        {
+            //propfing file with same name
+            Find(file.Name);
+            //if not found upload
+            //else downlaod
+        }
+
+        /*public NextcloudObject Get(string path)
+        {
+
+            return ;
+        }*/
+
+        public void setSavePath(string path)
+        {
+            userConfig.nextcloud.path = path; 
+        }
+
+        public class NextcloudObject
+        {
+            public WebDavResource Entry;
+            public string Name;
+            public string Type;
+            public string Path;
+            public NextcloudObject(WebDavResource obj)
+            {
+                Entry = obj;
+                Path = Entry.Uri;
+                
+                if(Path.EndsWith("/"))
+                {
+                    Type = "Directory";
+                }
+                else{
+                    Type = "File";
+                }
+
+                Name = extractName();
+            }
+
+            private string extractName()
+            {
+                string name = Path;
+                name = name.TrimEnd('/');
+                string[] parts = name.Split('/');
+                name = parts.Last();
+                return name;
+            }
+        }
 
 	private void initClient()
 	{
