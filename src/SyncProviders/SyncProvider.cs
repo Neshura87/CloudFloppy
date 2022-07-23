@@ -44,8 +44,9 @@ public abstract class SyncProvider
 	/// </summary>
 	/// <param name="gameId">The ID of the game to upload files for</param>
 	/// <param name="inDir">The local directory containing save data</param>
+	/// <param name="lastModTime">The time the last file was modified at</param>
 	/// <returns></returns>
-	public abstract Task UploadFiles(string gameId, string inDir);
+	public abstract Task UploadFiles(string gameId, string inDir, DateTime lastModTime);
 
 	/// <summary>
 	/// Returns the total and available space on the remote server.
