@@ -6,7 +6,7 @@ using WebDav;
 
 namespace GameSync;
 
-class Nextcloud
+class Nextcloud : SyncProvider
 {
 	private IWebDavClient nextCloudClient;
 	private NetworkCredential nextcloudCredentials;
@@ -164,20 +164,6 @@ class Nextcloud
 		return found;
 	}
 
-	public void Sync(System.IO.FileInfo file)
-	{
-		//propfing file with same name
-		Find(file.Name);
-		//if not found upload
-		//else downlaod
-	}
-
-	/*public NextcloudObject Get(string path)
-    {
-
-        return ;
-    }*/
-
 	public void setSavePath(string path)
 	{
 		userConfig.nextcloud.path = path;
@@ -225,4 +211,24 @@ class Nextcloud
 		};
 		nextCloudClient = new WebDavClient(webParams);
 	}
+
+	private List<string> getContents(string path)
+	{
+		
+	}
+	// SyncProvider Functions implemented here
+
+	/*public Task<DateTime?> GetLastSyncTime(string gameID)
+	{
+
+	}*/
+
+	public override Task<List<string>> ListFiles(string gameId)
+	{
+		// needs to work recursively
+		// returns relative path from saveroot (use gameId for that)
+		// recursive due to fodlers
+		List<string> contents = getContents(gameId);
+	}
+
 }
