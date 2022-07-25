@@ -4,8 +4,8 @@ namespace GameSync;
 
 public class RSyncSyncProvider : SyncProvider
 {
-	public string username;
-	public string host;
+	public string? username;
+	public string? host;
 	/// <summary>
 	/// The remote directory, which contains the game files.
 	/// </summary>
@@ -16,10 +16,10 @@ public class RSyncSyncProvider : SyncProvider
 	/// <summary>
 	/// Returns `user@host` or `host` if username is empty.
 	/// </summary>
-	string getSshString()
+	string? getSshString()
 		=> string.IsNullOrEmpty(username) ?
-		host :
-		$"{username}@{host}";
+			host :
+			$"{username}@{host}";
 
 	public override async Task DownloadFiles(string gameId, string outDir)
 	{
