@@ -26,7 +26,7 @@ public class RSyncSyncProvider : SyncProvider
 		var startinfo = new ProcessStartInfo();
 		startinfo.FileName = "rsync";
 		// recursive
-		startinfo.ArgumentList.Add("-r");
+		startinfo.ArgumentList.Add("-rtN");
 		startinfo.ArgumentList.Add(getSshString() + ":" + saveDir + "/" + gameId + "/");
 		startinfo.ArgumentList.Add(outDir + "/");
 		startinfo.RedirectStandardError = true;
@@ -138,7 +138,7 @@ public class RSyncSyncProvider : SyncProvider
 			var startinfo = new ProcessStartInfo();
 			startinfo.FileName = "rsync";
 			// recursive
-			startinfo.ArgumentList.Add("-r");
+			startinfo.ArgumentList.Add("-rtN");
 			startinfo.ArgumentList.Add(inDir + "/");
 			startinfo.ArgumentList.Add(getSshString() + ":" + saveDir + "/" + gameId + "/");
 			startinfo.RedirectStandardError = true;
