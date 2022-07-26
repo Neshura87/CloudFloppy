@@ -12,6 +12,7 @@ public class RsyncConfig
 	public string SaveDir { get; set; } = "Saves";
 }
 
+[SyncProviderID("RSync")]
 public class RSyncSyncProvider : SyncProvider
 {
 	const string lastSyncFile = ".lastsync";

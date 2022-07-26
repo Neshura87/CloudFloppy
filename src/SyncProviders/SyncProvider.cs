@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Reflection;
 using System.Collections.Generic;
 
 namespace GameSync;
@@ -16,8 +17,30 @@ public class SpaceUssage
 	public ulong FreeSpace;
 }
 
+[AttributeUsage(AttributeTargets.Class)]
+public class SyncProviderIDAttribute : Attribute
+{
+	public string Id;
+	public SyncProviderIDAttribute(string id)
+	{
+		Id = id;
+	}
+}
+
 public abstract class SyncProvider
 {
+	public static SyncProvider GetSyncProvider(string id)
+	{
+		var t = typeof(SyncProvider).Assembly.GetTypes()
+			.Where(t => t.IsAssignableTo(typeof(SyncProvider)))
+			.FirstOrDefault(t => t.GetCustomAttribute<SyncProviderIDAttribute>(false)?.Id == id);
+
+		if (t == null)
+			throw new Exception("Sync provider not found: " + id);
+
+		return (SyncProvider)Activator.CreateInstance(t);
+	}
+
 	/// <summary>
 	/// Get the last time saves for a game were synced.
 	/// </summary>
