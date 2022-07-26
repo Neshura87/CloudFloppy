@@ -35,4 +35,3 @@ Config is saved in XDG directory (should be .config by default)
 
 
 ## Example
-[Example Config]()
