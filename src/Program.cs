@@ -143,7 +143,7 @@ class Program
 
 		SpaceUsage su = await provider.GetSpaceUsage();
 
-		Console.WriteLine("Free Space:" + su.FreeSpace);
+		Console.WriteLine("Free Space: " + su.humanReadable(su.FreeSpace));
 
 		Console.WriteLine("Available games:");
 		foreach (var game in Config.Instance.Games)

@@ -15,6 +15,30 @@ public class SpaceUsage
 	/// Available space in bytes.
 	/// </summary>
 	public ulong FreeSpace;
+
+	public string humanReadable(ulong input)
+	{
+		string size;
+		const double kb = 1024;
+		const double mb = 1024*1024;
+		const double gb = mb*1024;
+		switch(input)
+		{
+			case >= (ulong)gb:
+				size = Math.Round((input/gb), 2).ToString() + " GB";
+				break;
+			case >= (ulong)mb:
+				size = Math.Round((input/mb), 2).ToString() + " MB";
+				break;
+			case >= (ulong)kb:
+				size = Math.Round((input/kb), 2).ToString() + " KB";
+				break;
+			case < 1024:
+				size = input.ToString() + " Bytes";
+				break;
+		}
+		return size;
+	}
 }
 
 [AttributeUsage(AttributeTargets.Class)]
