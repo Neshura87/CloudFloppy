@@ -32,6 +32,3 @@ Config is saved in XDG directory (should be .config by default)
 |WinePrefix|string|if GameType is Wine this stores the used prefix|
 |IncludeRegex|string|regex for explicitly included files in the save dir|
 |ExcludeRegex|string|regex for explicitly excluded files in the save dir|
-
-
-## Example
