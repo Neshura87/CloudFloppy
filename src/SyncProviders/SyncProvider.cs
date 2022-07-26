@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace GameSync;
 
-public class SpaceUssage
+public class SpaceUsage
 {
 	/// <summary>
 	/// Total available space in bytes.
@@ -73,5 +73,5 @@ public abstract class SyncProvider
 	/// Returns the total and available space on the remote server.
 	/// </summary>
 	/// <returns>Total and available space on the remote server</returns>
-	public abstract Task<SpaceUssage> GetSpaceUsage();
+	public abstract Task<SpaceUsage> GetSpaceUsage();
 }

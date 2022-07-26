@@ -112,7 +112,7 @@ class Program
 
 		DateTime localModifiedTime = GetLatestModifiedTime(game.FullPath + "/",
 			 new Regex(game.IncludeRegex), new Regex(game.ExcludeRegex));
-
+       
 		if (lastSyncTime == null)
 		{
 			Console.WriteLine("Game " + game.Name + " not on remote server, uploading...");
@@ -138,6 +138,12 @@ class Program
 	static async Task<int> List(ListOptions op)
 	{
 		Config.LoadConfig();
+
+		SyncProvider provider = SyncProvider.GetSyncProvider(Config.Instance.Provider);
+
+		SpaceUsage su = await provider.GetSpaceUsage();
+
+		Console.WriteLine("Free Space:" + su.FreeSpace);
 
 		Console.WriteLine("Available games:");
 		foreach (var game in Config.Instance.Games)
