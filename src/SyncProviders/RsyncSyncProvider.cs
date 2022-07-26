@@ -2,24 +2,27 @@ using System.Diagnostics;
 
 namespace GameSync;
 
-public class RSyncSyncProvider : SyncProvider
+public class RsyncConfig
 {
-	public string? username;
-	public string? host;
+	public string? Username { get; set; }
+	public string? Host { get; set; }
 	/// <summary>
 	/// The remote directory, which contains the game files.
 	/// </summary>
-	public string saveDir = "Saves";
+	public string SaveDir { get; set; } = "Saves";
+}
 
+public class RSyncSyncProvider : SyncProvider
+{
 	const string lastSyncFile = ".lastsync";
 
 	/// <summary>
 	/// Returns `user@host` or `host` if username is empty.
 	/// </summary>
 	string? getSshString()
-		=> string.IsNullOrEmpty(username) ?
-			host :
-			$"{username}@{host}";
+		=> string.IsNullOrEmpty(Config.Instance.Rsync.Username) ?
+			Config.Instance.Rsync.Host :
+			$"{Config.Instance.Rsync.Username}@{Config.Instance.Rsync.Host}";
 
 	public override async Task DownloadFiles(string gameId, string outDir)
 	{
@@ -27,7 +30,7 @@ public class RSyncSyncProvider : SyncProvider
 		startinfo.FileName = "rsync";
 		// recursive
 		startinfo.ArgumentList.Add("-rtN");
-		startinfo.ArgumentList.Add(getSshString() + ":" + saveDir + "/" + gameId + "/");
+		startinfo.ArgumentList.Add(getSshString() + ":" + Config.Instance.Rsync.SaveDir + "/" + gameId + "/");
 		startinfo.ArgumentList.Add(outDir + "/");
 		startinfo.RedirectStandardError = true;
 		startinfo.RedirectStandardOutput = true;
@@ -51,7 +54,7 @@ public class RSyncSyncProvider : SyncProvider
 		// recursive
 		startinfo.ArgumentList.Add(getSshString());
 		startinfo.ArgumentList.Add("cat");
-		startinfo.ArgumentList.Add(saveDir + "/" + gameId + "/" + lastSyncFile);
+		startinfo.ArgumentList.Add(Config.Instance.Rsync.SaveDir + "/" + gameId + "/" + lastSyncFile);
 		startinfo.RedirectStandardError = true;
 		startinfo.RedirectStandardOutput = true;
 
@@ -77,7 +80,7 @@ public class RSyncSyncProvider : SyncProvider
 		startinfo.ArgumentList.Add("df");
 		startinfo.ArgumentList.Add("--block-size=1");
 		startinfo.ArgumentList.Add("-P");
-		startinfo.ArgumentList.Add(saveDir);
+		startinfo.ArgumentList.Add(Config.Instance.Rsync.SaveDir);
 		startinfo.RedirectStandardError = true;
 		startinfo.RedirectStandardOutput = true;
 
@@ -102,7 +105,7 @@ public class RSyncSyncProvider : SyncProvider
 
 	public override async Task<List<string>> ListFiles(string gameId)
 	{
-		string dir = saveDir + "/" + gameId;
+		string dir = Config.Instance.Rsync.SaveDir + "/" + gameId;
 
 		var startinfo = new ProcessStartInfo();
 		startinfo.FileName = "ssh";
@@ -140,7 +143,7 @@ public class RSyncSyncProvider : SyncProvider
 			// recursive
 			startinfo.ArgumentList.Add("-rtN");
 			startinfo.ArgumentList.Add(inDir + "/");
-			startinfo.ArgumentList.Add(getSshString() + ":" + saveDir + "/" + gameId + "/");
+			startinfo.ArgumentList.Add(getSshString() + ":" + Config.Instance.Rsync.SaveDir + "/" + gameId + "/");
 			startinfo.RedirectStandardError = true;
 			startinfo.RedirectStandardOutput = true;
 
@@ -163,7 +166,7 @@ public class RSyncSyncProvider : SyncProvider
 			startinfo.ArgumentList.Add("echo");
 			startinfo.ArgumentList.Add(lastModTime.Ticks.ToString());
 			startinfo.ArgumentList.Add(">");
-			startinfo.ArgumentList.Add(saveDir + "/" + gameId + "/" + lastSyncFile);
+			startinfo.ArgumentList.Add(Config.Instance.Rsync.SaveDir + "/" + gameId + "/" + lastSyncFile);
 			startinfo.RedirectStandardError = true;
 			startinfo.RedirectStandardOutput = true;
 

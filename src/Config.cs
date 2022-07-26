@@ -1,17 +1,40 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.IO;
 
 namespace GameSync;
 
 public class Config
 {
+	public static Config? Instance;
+
+	public static void LoadConfig()
+	{
+		string home = Environment.GetEnvironmentVariable("HOME")
+				?? "/home/" + Environment.GetEnvironmentVariable("USER");
+
+		string xdgconfdir = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
+								?? home + "/.config";
+
+		string confpath = xdgconfdir + "/GameSync/config.json";
+
+		if (!File.Exists(confpath)) throw new Exception("Config file not found: " + confpath);
+
+		Config.Instance = JsonSerializer.Deserialize<Config>(File.ReadAllText(confpath));
+	}
+
 	public Config()
 	{
 		nextcloud = new NexctloudConfig();
+		Rsync = new();
 	}
+	public string Provider { get; set; }
 	public NexctloudConfig nextcloud { get; set; }
+	public RsyncConfig Rsync { get; set; }
+	public List<Game> Games { get; set; } = new List<Game>();
 
 	public bool IsNullOrEmpty()
 	{
