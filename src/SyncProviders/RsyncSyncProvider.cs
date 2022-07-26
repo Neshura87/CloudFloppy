@@ -4,8 +4,8 @@ namespace GameSync;
 
 public class RsyncConfig
 {
-	public string? Username { get; set; }
-	public string? Host { get; set; }
+	public string Username { get; set; }
+	public string Host { get; set; }
 	/// <summary>
 	/// The remote directory, which contains the game files.
 	/// </summary>
@@ -20,7 +20,7 @@ public class RSyncSyncProvider : SyncProvider
 	/// <summary>
 	/// Returns `user@host` or `host` if username is empty.
 	/// </summary>
-	string? getSshString()
+	string getSshString()
 		=> string.IsNullOrEmpty(Config.Instance.Rsync.Username) ?
 			Config.Instance.Rsync.Host :
 			$"{Config.Instance.Rsync.Username}@{Config.Instance.Rsync.Host}";
