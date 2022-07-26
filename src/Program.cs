@@ -33,14 +33,14 @@ class Program
 	class RunOptions
 	{
 		[Value(0)]
-		public string? GameID { get; set; } = null;
+		public string GameID { get; set; } = null;
 	}
 
 	[Verb("sync", HelpText = "Syncronize saves for games.")]
 	class SyncOptions
 	{
 		[Value(0, Min = 1)]
-		public IEnumerable<string?> GameIDs { get; set; } = new string?[] { };
+		public IEnumerable<string> GameIDs { get; set; } = new string[] { };
 	}
 
 	[Verb("syncall", HelpText = "Syncronize saves for all games.")]
