@@ -1,5 +1,7 @@
 # Config Explanation
 
+Config is saved in XDG directory (should be .config by default)
+
 ## Nextcloud
 
 |name|type|description|
@@ -11,6 +13,7 @@
 
 ## rsync/ssh
 |name|type|description|
+|----|----|-----------|
 |Username|string|duh|
 |Host|string|Hostname of sync target|
 |SaveDir|string|root directroy where the saves are synced|
@@ -29,3 +32,7 @@
 |WinePrefix|string|if GameType is Wine this stores the used prefix|
 |IncludeRegex|string|regex for explicitly included files in the save dir|
 |ExcludeRegex|string|regex for explicitly excluded files in the save dir|
+
+
+## Example
+[Example Config]()
