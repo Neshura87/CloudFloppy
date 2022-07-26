@@ -214,14 +214,14 @@ class Nextcloud : SyncProvider
 
 	private List<string> getContents(string path)
 	{
-		
+		throw new NotImplementedException();
 	}
 	// SyncProvider Functions implemented here
 
-	/*public Task<DateTime?> GetLastSyncTime(string gameID)
+	public override Task<DateTime?> GetLastSyncTime(string gameID)
 	{
-
-	}*/
+		throw new NotImplementedException();
+	}
 
 	public override Task<List<string>> ListFiles(string gameId)
 	{
@@ -229,6 +229,21 @@ class Nextcloud : SyncProvider
 		// returns relative path from saveroot (use gameId for that)
 		// recursive due to fodlers
 		List<string> contents = getContents(gameId);
+		return Task.FromResult(contents);
 	}
 
+	public override Task DownloadFiles(string gameId, string outDir)
+	{
+		throw new NotImplementedException();
+	}
+
+	public override Task UploadFiles(string gameId, string inDir, DateTime lastModTime)
+	{
+		throw new NotImplementedException();
+	}
+
+	public override Task<SpaceUssage> GetSpaceUsage()
+	{
+		throw new NotImplementedException();
+	}
 }
