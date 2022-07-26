@@ -54,7 +54,7 @@ public class Game
 					}
 					break;
 				case GameType.Wine:
-					string pfx = WinePrefix ?? home + ".wine";
+					string pfx = WinePrefix ?? home + "/.wine";
 					// TODO: enviroment variables
 					string profile = pfx + "/drive_c/users/" + Environment.GetEnvironmentVariable("USER");
 					switch (SaveRoot)
