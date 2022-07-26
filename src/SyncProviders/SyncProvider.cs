@@ -51,25 +51,23 @@ public abstract class SyncProvider
 	/// <summary>
 	/// Return a list of files stored for a game.
 	/// </summary>
-	/// <param name="gameId">The ID of the game to check</param>
-	/// <returns>IEnumerable of relative file paths</returns>
-	public abstract Task<List<string>> ListFiles(string gameId);
+	/// <param name="gameId">The game to list files for</param>
+	/// <returns>List of relative file paths</returns>
+	public abstract Task<List<string>> ListFiles(Game game);
 
 	/// <summary>
 	/// Downloads all the remote files to a local directory.
 	/// </summary>
-	/// <param name="gameId">The ID of the game to download files for</param>
-	/// <param name="outDir">The output directory</param>
-	public abstract Task DownloadFiles(string gameId, string outDir);
+	/// <param name="gameId">The game to download files for</param>
+	public abstract Task DownloadFiles(Game game);
 
 	/// <summary>
 	/// Upload files from local directory to remote server.
 	/// </summary>
-	/// <param name="gameId">The ID of the game to upload files for</param>
-	/// <param name="inDir">The local directory containing save data</param>
+	/// <param name="gameId">The game to upload files for</param>
 	/// <param name="lastModTime">The time the last file was modified at</param>
 	/// <returns></returns>
-	public abstract Task UploadFiles(string gameId, string inDir, DateTime lastModTime);
+	public abstract Task UploadFiles(Game game, DateTime lastModTime);
 
 	/// <summary>
 	/// Returns the total and available space on the remote server.
