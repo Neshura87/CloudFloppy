@@ -77,7 +77,12 @@ public class NextcloudConfig
 		return !string.IsNullOrEmpty(Url);
 	}
 
-	public NetworkCredential generateCredentials()
+	public bool hasPath()
+    {
+        return !string.IsNullOrEmpty(Path);
+    }
+
+    public NetworkCredential generateCredentials()
 	{
 		if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(plainPassword)) { }
 		NetworkCredential auth = new NetworkCredential(Username, plainPassword);
