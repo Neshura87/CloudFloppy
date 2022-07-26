@@ -40,7 +40,7 @@ class Program
 	class SyncOptions
 	{
 		[Value(0, Min = 1)]
-		public IEnumerable<string?> GameIDs { get; set; } = new string?[]{};
+		public IEnumerable<string?> GameIDs { get; set; } = new string?[] { };
 	}
 
 	[Verb("syncall", HelpText = "Syncronize saves for all games.")]
@@ -57,43 +57,63 @@ class Program
 
 	static async Task<int> SyncAll(SyncAllOptions op)
 	{
-		return await Sync(new SyncOptions
-		{
-			GameIDs = new string[] { "game1", "game2", "game3"
-			}
-		});
-	}
+		Config.LoadConfig();
 
-	static async Task<int> Sync(SyncOptions op)
-	{
-		foreach (string game in op.GameIDs.Distinct())
-			Console.WriteLine("Syncing " + game);
+		foreach(var game in Config.Instance.Games)
+			await Sync(game);
 
 		return await Task.FromResult(0);
 	}
 
+	static async Task<int> Sync(SyncOptions op)
+	{
+		Config.LoadConfig();
+
+		foreach (string game in op.GameIDs.Distinct())
+		{
+			await Sync(Config.Instance.Games.FirstOrDefault(g => g.Id == game));
+		}
+
+		return await Task.FromResult(0);
+	}
+
+	static async Task Sync(Game g)
+	{
+		if(g == null) return;
+
+		Console.WriteLine("Syncing " + g.Name);		
+	}
+
 	static async Task<int> List(ListOptions op)
 	{
+		Config.LoadConfig();
+
 		Console.WriteLine("Available games:");
-		foreach (string game in new string[] { "game1", "game2", "game3" })
-			Console.WriteLine(game);
+		foreach (var game in Config.Instance.Games)
+			Console.WriteLine($"{game.Name} ({game.Id})");
 
 		return await Task.FromResult(0);
 	}
 
 	static async Task<int> Run(RunOptions op)
 	{
-		Console.WriteLine("Running " + op.GameID);
+		Config.LoadConfig();
+		var game = Config.Instance.Games.FirstOrDefault(g => g.Id == op.GameID);
+		if (game == null)
+		{
+			Console.WriteLine("Game not found.");
+			return await Task.FromResult(1);
+		}
+
+		Console.WriteLine("Running " + game.Name);
 
 		return await Task.FromResult(0);
 	}
 
 	static async Task<int> Demo()
 	{
-		SyncProvider provider = new RSyncSyncProvider();
+		SyncProvider provider = SyncProvider.GetSyncProvider("RSync");
 		var rs = (RSyncSyncProvider)provider;
-		rs.host = "mc.ryhn.link";
-		rs.username = "ubuntu";
 
 		string gameId = "holocure";
 		string saveDir = "/home/ryhon/.wine/drive_c/users/ryhon/AppData/Local/HoloCure";
