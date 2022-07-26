@@ -9,7 +9,7 @@ namespace GameSync;
 
 public class Config
 {
-	public static Config? Instance;
+	public static Config Instance;
 
 	public static void LoadConfig()
 	{

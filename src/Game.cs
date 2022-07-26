@@ -2,15 +2,15 @@ using System.Text.Json.Serialization;
 
 public class Game
 {
-	public string? Id { get; set; }
-	public string? Name { get; set; }
+	public string Id { get; set; }
+	public string Name { get; set; }
 	[JsonConverter(typeof(JsonStringEnumConverter))]
 	public GameType GameType { get; set; }
 	[JsonConverter(typeof(JsonStringEnumConverter))]
 	public SaveRoot SaveRoot { get; set; }
 	public string SaveRootSubdirectory { get; set; } = "";
-	public string? GameDirectory { get; set; }
-	public string? WinePrefix { get; set; }
+	public string GameDirectory { get; set; }
+	public string WinePrefix { get; set; }
 	public string IncludeRegex { get; set; } = ".*";
 	public string ExcludeRegex { get; set; } = "";
 
