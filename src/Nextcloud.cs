@@ -223,21 +223,21 @@ class Nextcloud : SyncProvider
 		throw new NotImplementedException();
 	}
 
-	public override Task<List<string>> ListFiles(string gameId)
+	public override Task<List<string>> ListFiles(Game game)
 	{
-		// needs to work recursively
+				// needs to work recursively
 		// returns relative path from saveroot (use gameId for that)
 		// recursive due to fodlers
-		List<string> contents = getContents(gameId);
+		List<string> contents = getContents(game.Id);
 		return Task.FromResult(contents);
 	}
 
-	public override Task DownloadFiles(string gameId, string outDir)
+	public override Task DownloadFiles(Game game)
 	{
 		throw new NotImplementedException();
 	}
 
-	public override Task UploadFiles(string gameId, string inDir, DateTime lastModTime)
+	public override Task UploadFiles(Game game, DateTime lastModTime)
 	{
 		throw new NotImplementedException();
 	}

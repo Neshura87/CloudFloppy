@@ -25,14 +25,41 @@ public class RSyncSyncProvider : SyncProvider
 			Config.Instance.Rsync.Host :
 			$"{Config.Instance.Rsync.Username}@{Config.Instance.Rsync.Host}";
 
-	public override async Task DownloadFiles(string gameId, string outDir)
+	async Task mkdir(string dir)
 	{
+				var startinfo = new ProcessStartInfo();
+		startinfo.FileName = "ssh";
+		// recursive
+		startinfo.ArgumentList.Add(getSshString());
+		startinfo.ArgumentList.Add("mkdir");
+		startinfo.ArgumentList.Add("-p");
+		startinfo.ArgumentList.Add(dir);
+		startinfo.RedirectStandardError = true;
+		startinfo.RedirectStandardOutput = true;
+
+		var proc = new Process();
+		proc.StartInfo = startinfo;
+		proc.Start();
+
+		await proc.WaitForExitAsync();
+	}
+
+	public override async Task DownloadFiles(Game game)
+	{
+		await mkdir(Config.Instance.Rsync.SaveDir + "/" + game.Id + "/");
+
 		var startinfo = new ProcessStartInfo();
 		startinfo.FileName = "rsync";
 		// recursive
-		startinfo.ArgumentList.Add("-rtN");
-		startinfo.ArgumentList.Add(getSshString() + ":" + Config.Instance.Rsync.SaveDir + "/" + gameId + "/");
-		startinfo.ArgumentList.Add(outDir + "/");
+		startinfo.ArgumentList.Add("-rt");
+		startinfo.ArgumentList.Add(getSshString() + ":" + Config.Instance.Rsync.SaveDir + "/" + game.Id + "/");
+		startinfo.ArgumentList.Add(game.FullPath + "/");
+		startinfo.ArgumentList.Add("--include");
+		startinfo.ArgumentList.Add(game.IncludeRegex);
+		startinfo.ArgumentList.Add("--exclude");
+		startinfo.ArgumentList.Add(game.ExcludeRegex);
+		startinfo.ArgumentList.Add("--exclude");
+		startinfo.ArgumentList.Add(lastSyncFile);
 		startinfo.RedirectStandardError = true;
 		startinfo.RedirectStandardOutput = true;
 
@@ -68,9 +95,9 @@ public class RSyncSyncProvider : SyncProvider
 		if (proc.ExitCode != 0)
 			return null;
 
+
 		string str = proc.StandardOutput.ReadToEnd().Trim();
-		return new DateTime(
-			long.Parse(str));
+		return new DateTime(long.Parse(str));
 	}
 
 	public override async Task<SpaceUssage> GetSpaceUsage()
@@ -104,9 +131,9 @@ public class RSyncSyncProvider : SyncProvider
 		return su;
 	}
 
-	public override async Task<List<string>> ListFiles(string gameId)
+	public override async Task<List<string>> ListFiles(Game game)
 	{
-		string dir = Config.Instance.Rsync.SaveDir + "/" + gameId;
+		string dir = Config.Instance.Rsync.SaveDir + "/" + game.Id;
 
 		var startinfo = new ProcessStartInfo();
 		startinfo.FileName = "ssh";
@@ -136,15 +163,21 @@ public class RSyncSyncProvider : SyncProvider
 			.ToList();
 	}
 
-	public override async Task UploadFiles(string gameId, string inDir, DateTime lastModTime)
+	public override async Task UploadFiles(Game game, DateTime lastModTime)
 	{
+		await mkdir(Config.Instance.Rsync.SaveDir + "/" + game.Id + "/");
+
 		{
 			var startinfo = new ProcessStartInfo();
 			startinfo.FileName = "rsync";
 			// recursive
-			startinfo.ArgumentList.Add("-rtN");
-			startinfo.ArgumentList.Add(inDir + "/");
-			startinfo.ArgumentList.Add(getSshString() + ":" + Config.Instance.Rsync.SaveDir + "/" + gameId + "/");
+			startinfo.ArgumentList.Add("-rt");
+			startinfo.ArgumentList.Add(game.FullPath + "/");
+			startinfo.ArgumentList.Add(getSshString() + ":" + Config.Instance.Rsync.SaveDir + "/" + game.Id + "/");
+			startinfo.ArgumentList.Add("--include");
+			startinfo.ArgumentList.Add(game.IncludeRegex);
+			startinfo.ArgumentList.Add("--exclude");
+			startinfo.ArgumentList.Add(game.ExcludeRegex);
 			startinfo.RedirectStandardError = true;
 			startinfo.RedirectStandardOutput = true;
 
@@ -167,7 +200,7 @@ public class RSyncSyncProvider : SyncProvider
 			startinfo.ArgumentList.Add("echo");
 			startinfo.ArgumentList.Add(lastModTime.Ticks.ToString());
 			startinfo.ArgumentList.Add(">");
-			startinfo.ArgumentList.Add(Config.Instance.Rsync.SaveDir + "/" + gameId + "/" + lastSyncFile);
+			startinfo.ArgumentList.Add(Config.Instance.Rsync.SaveDir + "/" + game.Id + "/" + lastSyncFile);
 			startinfo.RedirectStandardError = true;
 			startinfo.RedirectStandardOutput = true;
 
