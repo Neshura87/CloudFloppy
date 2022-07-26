@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json.Serialization;
 using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Linq;
 using WebDav;
 
 
@@ -8,146 +10,146 @@ namespace GameSync;
 
 public class NextcloudConfig
 {
-	public NextcloudConfig()
-	{
-		_password = new byte[0];
-		Username = "";
-		Url = "";
-		Path = "";
-	}
-	// key generated using random numbers
+    public NextcloudConfig()
+    {
+        _password = new byte[0];
+        Username = "";
+        Url = "";
+        Path = "";
+    }
+    // key generated using random numbers
     [JsonIgnore]
-	private static byte[] key =
-				{
-					0x65, 0xcd, 0xdd, 0x5d, 0x56, 0xd6, 0xc7, 0x22,
-					0xbd, 0xdf, 0xd4, 0xa6, 0x6f, 0x1e, 0xe1, 0xdd
-					};
+    private static byte[] key =
+                {
+                    0x65, 0xcd, 0xdd, 0x5d, 0x56, 0xd6, 0xc7, 0x22,
+                    0xbd, 0xdf, 0xd4, 0xa6, 0x6f, 0x1e, 0xe1, 0xdd
+                    };
 
-	[JsonIgnore]
-	private byte[] _password;
+    [JsonIgnore]
+    private byte[] _password;
 
-	public byte[] Password
-	{
-		get
-		{
-			return _password;
-		}
-		set
-		{
-			// this is needed for loading of the encrypted password
-			_password = value;
-		}
-	}
+    public byte[] Password
+    {
+        get
+        {
+            return _password;
+        }
+        set
+        {
+            // this is needed for loading of the encrypted password
+            _password = value;
+        }
+    }
 
-	[JsonIgnore]
-	public string plainPassword
-	{
-		get
-		{
-			return decryptPassword(_password);
-		}
-		set
-		{
-			// encrypt string so it can be safely stored
-			_password = encryptPassword(value);
-		}
+    [JsonIgnore]
+    public string plainPassword
+    {
+        get
+        {
+            return decryptPassword(_password);
+        }
+        set
+        {
+            // encrypt string so it can be safely stored
+            _password = encryptPassword(value);
+        }
 
-	}
-	public string Username { get; set; }
-	public string Url { get; set; }
+    }
+    public string Username { get; set; }
+    public string Url { get; set; }
 
-	public string Path { get; set; }
+    public string Path { get; set; }
 
-	public bool IsNullOrEmpty()
-	{
-		if (hasCredentials() || hasUrl())
-		{ return false; }
-		else { return true; }
-	}
+    public bool IsNullOrEmpty()
+    {
+        if (hasCredentials() || hasUrl())
+        { return false; }
+        else { return true; }
+    }
 
-	public bool hasCredentials()
-	{
-		if (string.IsNullOrEmpty(plainPassword) || string.IsNullOrEmpty(Username))
-		{ return false; }
-		else { return true; }
-	}
+    public bool hasCredentials()
+    {
+        if (string.IsNullOrEmpty(plainPassword) || string.IsNullOrEmpty(Username))
+        { return false; }
+        else { return true; }
+    }
 
-	public bool hasUrl()
-	{
-		return !string.IsNullOrEmpty(Url);
-	}
+    public bool hasUrl()
+    {
+        return !string.IsNullOrEmpty(Url);
+    }
 
-	public bool hasPath()
+    public bool hasPath()
     {
         return !string.IsNullOrEmpty(Path);
     }
 
     public NetworkCredential generateCredentials()
-	{
-		if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(plainPassword)) { }
-		NetworkCredential auth = new NetworkCredential(Username, plainPassword);
-		return auth;
-	}
+    {
+        if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(plainPassword)) { }
+        NetworkCredential auth = new NetworkCredential(Username, plainPassword);
+        return auth;
+    }
 
-	private static byte[] encryptPassword(string input)
-	{
-		using (Aes aes = Aes.Create())
-		{
-			var stream = new MemoryStream();
-			aes.Key = key;
+    private static byte[] encryptPassword(string input)
+    {
+        using (Aes aes = Aes.Create())
+        {
+            var stream = new MemoryStream();
+            aes.Key = key;
 
-			byte[] iv = aes.IV;
-			stream.Write(iv, 0, iv.Length);
+            byte[] iv = aes.IV;
+            stream.Write(iv, 0, iv.Length);
 
-			using (CryptoStream cryptoStream = new(
-							stream,
-							aes.CreateEncryptor(),
-							CryptoStreamMode.Write))
-			{
-				using (StreamWriter encryptWriter = new(cryptoStream))
-				{
-					encryptWriter.Write(input);
-				}
-			}
+            using (CryptoStream cryptoStream = new(
+                            stream,
+                            aes.CreateEncryptor(),
+                            CryptoStreamMode.Write))
+            {
+                using (StreamWriter encryptWriter = new(cryptoStream))
+                {
+                    encryptWriter.Write(input);
+                }
+            }
 
-			return stream.ToArray();
-		}
-	}
+            return stream.ToArray();
+        }
+    }
 
-	private static string decryptPassword(byte[] input)
-	{
-		if (input.Length == 0) { return ""; }
-		using (Aes aes = Aes.Create())
-		{
-			var stream = new MemoryStream(input);
-			aes.Key = key;
+    private static string decryptPassword(byte[] input)
+    {
+        if (input.Length == 0) { return ""; }
+        using (Aes aes = Aes.Create())
+        {
+            var stream = new MemoryStream(input);
+            aes.Key = key;
 
-			byte[] iv = new byte[aes.IV.Length];
-			int numBytesToRead = aes.IV.Length;
-			int numBytesRead = 0;
-			while (numBytesToRead > 0)
-			{
-				int n = stream.Read(iv, numBytesRead, numBytesToRead);
-				if (n == 0) break;
+            byte[] iv = new byte[aes.IV.Length];
+            int numBytesToRead = aes.IV.Length;
+            int numBytesRead = 0;
+            while (numBytesToRead > 0)
+            {
+                int n = stream.Read(iv, numBytesRead, numBytesToRead);
+                if (n == 0) break;
 
-				numBytesRead += n;
-				numBytesToRead -= n;
-			}
+                numBytesRead += n;
+                numBytesToRead -= n;
+            }
 
 
-			using (CryptoStream cryptoStream = new(
-			stream,
-			aes.CreateDecryptor(key, iv),
-			CryptoStreamMode.Read))
-			{
-				using (StreamReader decryptReader = new(cryptoStream))
-				{
-					return decryptReader.ReadToEndAsync().Result;
-				}
-			}
-		}
+            using (CryptoStream cryptoStream = new(
+            stream,
+            aes.CreateDecryptor(key, iv),
+            CryptoStreamMode.Read))
+            {
+                using (StreamReader decryptReader = new(cryptoStream))
+                {
+                    return decryptReader.ReadToEndAsync().Result;
+                }
+            }
+        }
 
-	}
+    }
 }
 
 class NextcloudSyncProvider : SyncProvider
@@ -298,37 +300,66 @@ class NextcloudSyncProvider : SyncProvider
         }
         return contents;
     }
+
     // SyncProvider Functions implemented here
+
+    public override Task DownloadFiles(Game game)
+    {
+        // check for dir on Nextcloud, create if it does not exist
+        // Download all files from Nextcloud.Path to game.FullPath/
+        // do not sync lastSyncFile
+        // do not sync game.ExcludeRegex
+        // do sync game.IncludeRegex
+        throw new NotImplementedException();
+    }
 
     public override Task<DateTime?> GetLastSyncTime(string gameId)
     {
+        // read .lastsync file on server -- maybe implement using metadata instead of content?
+        // parse data into DateTime format
         throw new NotImplementedException();
+    }
+
+    public override Task<SpaceUsage> GetSpaceUsage()
+    {
+        // easier to implement using OCS instead of WebDav
+        // return free space from the quota
+        string ocs = "ocs/v1.php/cloud/users/" + Config.Instance.Nextcloud.Username;
+
+        string credentials = Config.Instance.Nextcloud.Username + ":" + Config.Instance.Nextcloud.plainPassword;
+        var authString = Convert.ToBase64String(Encoding.ASCII.GetBytes(credentials));
+
+        using var client = new HttpClient();
+
+        client.BaseAddress = new Uri(Config.Instance.Nextcloud.Url);
+        client.DefaultRequestHeaders.Add("OCS-APIRequest", "true");
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authString);
+
+        var res = client.GetAsync(ocs).Result;
+        string content = res.Content.ReadAsStringAsync().Result;
+
+        List<XElement> quotaData = XElement.Parse(content).Elements("data").Elements("quota").ToList();
+        
+        SpaceUsage usage = new SpaceUsage();
+        usage.TotalSpace = Convert.ToUInt64(quotaData.Elements("total").ToList()[0].Value);
+        usage.FreeSpace = Convert.ToUInt64(quotaData.Elements("free").ToList()[0].Value);
+
+        return Task.FromResult(usage);
     }
 
     public override Task<List<string>> ListFiles(Game game)
     {
-        // needs to work recursively
-        // returns relative path from saveroot (use gameId for that)
-        // recursive due to fodlers
         List<string> contents = getContents("remote.php/dav/files/" + Config.Instance.Nextcloud.Username + "/" + Config.Instance.Nextcloud.Path + game.Id + "/");
         return Task.FromResult(contents);
     }
 
-    public override Task DownloadFiles(Game game)
-    {
-        throw new NotImplementedException();
-    }
-
     public override Task UploadFiles(Game game, DateTime lastModTime)
     {
+        // check for dir on on Nextcloud, create if it does not exist
+        // Upload all files from game.FullPath/ to Nextcloud.Path
+        // do not sync game.ExcludeRegex
+        // do sync game.IncludeRegex
+        // sync .lastsync file containing last sync time
         throw new NotImplementedException();
     }
-
-    public override Task<SpaceUssage> GetSpaceUsage()
-    {
-        throw new NotImplementedException();
-    }
-
-
-
 }

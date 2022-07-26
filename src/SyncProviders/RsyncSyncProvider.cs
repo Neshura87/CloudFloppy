@@ -100,7 +100,7 @@ public class RSyncSyncProvider : SyncProvider
 		return new DateTime(long.Parse(str));
 	}
 
-	public override async Task<SpaceUssage> GetSpaceUsage()
+	public override async Task<SpaceUsage> GetSpaceUsage()
 	{
 		var startinfo = new ProcessStartInfo();
 		startinfo.FileName = "ssh";
@@ -124,7 +124,7 @@ public class RSyncSyncProvider : SyncProvider
 			+ proc.StandardError.ReadToEnd());
 
 		string[] cols = proc.StandardOutput.ReadToEnd().Split('\n')[1].Split(' ').Where(s => s != "").ToArray();
-		var su = new SpaceUssage();
+		var su = new SpaceUsage();
 		su.TotalSpace = ulong.Parse(cols[1]);
 		su.FreeSpace = ulong.Parse(cols[3]);
 

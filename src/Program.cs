@@ -139,6 +139,12 @@ class Program
 	{
 		Config.LoadConfig();
 
+		SyncProvider provider = SyncProvider.GetSyncProvider(Config.Instance.Provider);
+
+		SpaceUsage su = await provider.GetSpaceUsage();
+
+		Console.WriteLine("Free Space:" + su.FreeSpace);
+
 		Console.WriteLine("Available games:");
 		foreach (var game in Config.Instance.Games)
 			Console.WriteLine($"{game.Name} ({game.Id})");
