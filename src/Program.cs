@@ -112,7 +112,7 @@ class Program
 
 		DateTime localModifiedTime = GetLatestModifiedTime(game.FullPath + "/",
 			 new Regex(game.IncludeRegex), new Regex(game.ExcludeRegex));
-
+       
 		if (lastSyncTime == null)
 		{
 			Console.WriteLine("Game " + game.Name + " not on remote server, uploading...");
