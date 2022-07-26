@@ -33,7 +33,7 @@ public class Game
 					switch (SaveRoot)
 					{
 						case SaveRoot.GameDirectory:
-							root = GameDirectory ?? ".";
+							root = GameDirectory.TrimEnd('/') ?? ".";
 							break;
 						case SaveRoot.Home:
 							root = home;
