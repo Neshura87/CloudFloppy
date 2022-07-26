@@ -12,7 +12,7 @@ public class Game
 	public string GameDirectory { get; set; }
 	public string WinePrefix { get; set; }
 	public string IncludeRegex { get; set; } = ".*";
-	public string ExcludeRegex { get; set; } = "";
+	public string ExcludeRegex { get; set; } = "^(?!x)x$";
 
 	[JsonIgnore]
 	public string FullPath
