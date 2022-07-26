@@ -1,6 +1,7 @@
 ﻿using GameSync;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using CommandLine;
 using CommandLine.Text;
@@ -9,10 +10,13 @@ class Program
 {
 	static DateTime GetLatestModifiedTime(string dir, Regex includeRegex, Regex excludeRegex)
 	{
-		return Directory.GetFiles(dir, ".*", SearchOption.AllDirectories)
-			.Where(f => !excludeRegex.IsMatch(f))
+		var files = Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
 			.Where(f => includeRegex.IsMatch(f))
-			.Max(f => File.GetLastAccessTime(f));
+			.Where(f => !excludeRegex.IsMatch(f));
+
+		if (files.Any())
+			return files.Max(f => File.GetLastWriteTime(f));
+		else return Directory.GetLastWriteTime(dir);
 	}
 
 	static async Task<int> Main(string[] args)
@@ -32,8 +36,15 @@ class Program
 	[Verb("run", HelpText = "Run and sync the game.")]
 	class RunOptions
 	{
-		[Value(0)]
+		[Value(0, HelpText = "ID of the game to run.")]
 		public string GameID { get; set; } = null;
+
+		[Option('b', "sync-before", HelpText = "Sync before running the game.")]
+		public bool SyncBefore { get; set; } = true;
+		[Option('a', "sync-after", HelpText = "Sync after the game exits.")]
+		public bool SyncAfter { get; set; } = true;
+		[Option('i', "interactive", HelpText = "User will be propmted when downloading and uploading saves.")]
+		public bool Interactive { get; set; } = false;
 	}
 
 	[Verb("sync", HelpText = "Syncronize saves for games.")]
@@ -59,8 +70,8 @@ class Program
 	{
 		Config.LoadConfig();
 
-		foreach(var game in Config.Instance.Games)
-			await Sync(game);
+		foreach (var game in Config.Instance.Games)
+			await Sync(game, false);
 
 		return await Task.FromResult(0);
 	}
@@ -71,17 +82,57 @@ class Program
 
 		foreach (string game in op.GameIDs.Distinct())
 		{
-			await Sync(Config.Instance.Games.FirstOrDefault(g => g.Id == game));
+			await Sync(Config.Instance.Games.FirstOrDefault(g => g.Id == game), false);
 		}
 
 		return await Task.FromResult(0);
 	}
 
-	static async Task Sync(Game g)
+	static async Task Sync(Game game, bool interactive)
 	{
-		if(g == null) return;
+		if (game == null) return;
 
-		Console.WriteLine("Syncing " + g.Name);		
+		Console.WriteLine("Syncing " + game.Name);
+
+		SyncProvider provider = SyncProvider.GetSyncProvider(Config.Instance.Provider);
+		DateTime? lastSyncTime = await provider.GetLastSyncTime(game.Id);
+
+		if (!Directory.Exists(game.FullPath))
+		{
+			Console.WriteLine("Game directory does not exist, downloading...");
+			if (lastSyncTime == null)
+			{
+				Console.WriteLine("Game not found on server, skipping");
+				return;
+			}
+
+			await provider.DownloadFiles(game);
+			return;
+		}
+
+		DateTime localModifiedTime = GetLatestModifiedTime(game.FullPath + "/",
+			 new Regex(game.IncludeRegex), new Regex(game.ExcludeRegex));
+
+		if (lastSyncTime == null)
+		{
+			Console.WriteLine("Game " + game.Name + " not on remote server, uploading...");
+			await provider.UploadFiles(game, localModifiedTime);
+			return;
+		}
+
+		var t = lastSyncTime ?? new DateTime(0);
+		if (t.Ticks > localModifiedTime.Ticks)
+		{
+			Console.WriteLine("Local save out of date, syncing...");
+			await provider.DownloadFiles(game);
+		}
+		else if (t.Ticks < localModifiedTime.Ticks)
+		{
+			Console.WriteLine("Remote save out of date, syncing...");
+			await provider.UploadFiles(game, localModifiedTime);
+		}
+
+		Console.WriteLine("Saves up to date!");
 	}
 
 	static async Task<int> List(ListOptions op)
@@ -122,7 +173,6 @@ class Program
 		if (op.SyncAfter)
 			await Sync(game, op.Interactive);
 
-		return 0;
+		return await Task.FromResult(proc.ExitCode);
 	}
-
 }
