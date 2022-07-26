@@ -105,70 +105,22 @@ class Program
 			return await Task.FromResult(1);
 		}
 
+		if (op.SyncBefore)
+			await Sync(game, op.Interactive);
+
 		Console.WriteLine("Running " + game.Name);
 
-		return await Task.FromResult(0);
-	}
+		var psi = new ProcessStartInfo("sh");
+		psi.ArgumentList.Add("-c");
+		psi.WorkingDirectory = game.GameDirectory;
+		psi.ArgumentList.Add(game.ShellCommand);
+		var proc = new Process();
+		proc.StartInfo = psi;
+		proc.Start();
+		await proc.WaitForExitAsync();
 
-	static async Task<int> Demo()
-	{
-		SyncProvider provider = SyncProvider.GetSyncProvider("RSync");
-		var rs = (RSyncSyncProvider)provider;
-
-		string gameId = "holocure";
-		string saveDir = "/home/ryhon/.wine/drive_c/users/ryhon/AppData/Local/HoloCure";
-		Regex includeRegex = new Regex(".*");
-		Regex excludeRegex = new Regex("screenshots", RegexOptions.IgnoreCase);
-
-		var space = await provider.GetSpaceUsage();
-		Console.WriteLine("Available space: " + space.FreeSpace + " bytes");
-		Console.WriteLine("Total space: " + space.TotalSpace + " bytes");
-		Console.WriteLine("Used precentage: " + ((space.TotalSpace - space.FreeSpace) / (float)space.TotalSpace) * 100 + "% used");
-
-		// Sync saves to local
-		{
-			DateTime? lastSyncTime = await provider.GetLastSyncTime(gameId);
-			if (lastSyncTime == null)
-				Console.WriteLine("Game " + gameId + " not on remote server");
-			else
-			{
-				Console.WriteLine("Remote files:");
-				foreach (string f in await provider.ListFiles(gameId))
-					Console.WriteLine("\t" + f);
-
-				DateTime localModifiedTime = GetLatestModifiedTime(saveDir, includeRegex, excludeRegex);
-
-				if ((lastSyncTime ?? new DateTime(0)) > localModifiedTime)
-				{
-					Console.WriteLine("Local save out of date, syncing...");
-					await provider.DownloadFiles(gameId, saveDir);
-					Console.WriteLine("Saves synced!");
-				}
-				else Console.WriteLine("Saves up to date!");
-			}
-		}
-
-		// Launch game and wait for exit
-		Console.WriteLine("Playing game...");
-		Console.WriteLine("Press any key to continue...");
-		Console.ReadLine();
-
-		// Sync saves to remote
-		{
-			DateTime? lastSyncTime = await provider.GetLastSyncTime(gameId);
-			if (lastSyncTime == null)
-				Console.WriteLine("Game " + gameId + " not on remote server");
-
-			DateTime localModifiedTime = GetLatestModifiedTime(saveDir, includeRegex, excludeRegex);
-
-			if ((lastSyncTime ?? new DateTime(0)) < localModifiedTime)
-			{
-				Console.WriteLine("Remote save out of date, syncing...");
-				await provider.UploadFiles(gameId, saveDir, localModifiedTime);
-				Console.WriteLine("Saves synced!");
-			}
-			else Console.WriteLine("Saves up to date!");
-		}
+		if (op.SyncAfter)
+			await Sync(game, op.Interactive);
 
 		return 0;
 	}

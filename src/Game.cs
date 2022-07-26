@@ -10,6 +10,7 @@ public class Game
 	public SaveRoot SaveRoot { get; set; }
 	public string SaveRootSubdirectory { get; set; } = "";
 	public string GameDirectory { get; set; }
+	public string ShellCommand { get; set; }
 	public string WinePrefix { get; set; }
 	public string IncludeRegex { get; set; } = ".*";
 	public string ExcludeRegex { get; set; } = "^(?!x)x$";
