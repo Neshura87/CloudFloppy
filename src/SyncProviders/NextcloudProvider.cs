@@ -153,7 +153,7 @@ public class NextcloudConfig
             {
                 using (StreamReader decryptReader = new(cryptoStream))
                 {
-                    return decryptReader.ReadToEndAsync().Result;
+                    return decryptReader.ReadToEnd();
                 }
             }
         }
@@ -164,7 +164,7 @@ public class NextcloudConfig
 [SyncProviderID("Nextcloud")]
 class NextcloudSyncProvider : SyncProvider
 {
-    private HttpClient nextCloudClient;
+    private HttpClient nextcloudClient;
 
     private AuthenticationHeaderValue nextcloudCredentials;
 
@@ -223,9 +223,9 @@ class NextcloudSyncProvider : SyncProvider
 
     private void initClient()
     {
-        nextCloudClient = new HttpClient();
-        nextCloudClient.BaseAddress = uri;
-        nextCloudClient.DefaultRequestHeaders.Authorization = nextcloudCredentials;
+        nextcloudClient = new HttpClient();
+        nextcloudClient.BaseAddress = uri;
+        nextcloudClient.DefaultRequestHeaders.Authorization = nextcloudCredentials;
     }
 
     private void getUrl()
@@ -268,30 +268,30 @@ class NextcloudSyncProvider : SyncProvider
         }*/
         throw new NotImplementedException();
     }
-    public async Task<List<string>> Propfind(string path)
+    private async Task<List<string>> Propfind(string path)
     {
         List<string> found = new List<string>();
 
         var method = new HttpMethod("PROPFIND");
         var req = new HttpRequestMessage(method, prefix + path);
-        var res = await nextCloudClient.SendAsync(req);
+        var res = await nextcloudClient.SendAsync(req);
         string xmlString = await res.Content.ReadAsStringAsync();
 
         XDocument xml = XDocument.Parse(xmlString);
         var paths = xml.Elements("{DAV:}multistatus").Elements("{DAV:}response").Elements("{DAV:}href");
         for (int i = 0; i < paths.Count(); i++)
         {
-            string dir = paths.ElementAt(i).Value.TrimStart('/');
+            string dir = paths.ElementAt(i).Value.TrimStart('/').Remove(0, prefix.Length);
             if (dir != prefix + path) found.Add(dir);
         }
         return found;
     }
 
-    public async Task Mkcol(string path)
+    private async Task Mkcol(string path)
     {
         var method = new HttpMethod("MKCOL");
         var req = new HttpRequestMessage(method, prefix + path);
-        var res = await nextCloudClient.SendAsync(req);
+        var res = await nextcloudClient.SendAsync(req);
         if (res.StatusCode != HttpStatusCode.Created && res.StatusCode != HttpStatusCode.MethodNotAllowed)
         {
             throw new StatusCodeException(res.StatusCode);
@@ -299,22 +299,52 @@ class NextcloudSyncProvider : SyncProvider
         return;
     }
 
-    public async Task<string> Get(string path)
+    private async Task<byte[]> Get(string path)
     {
-        throw new NotImplementedException();
+        var method = new HttpMethod("GET");
+        var req = new HttpRequestMessage(method, prefix + path);
+        var res = await nextcloudClient.SendAsync(req);
+        if (res.IsSuccessStatusCode)
+        {
+            var content = await res.Content.ReadAsByteArrayAsync();
+            return content;
+        }
+        else
+        {
+            return null;
+        }
     }
 
-    public async Task Put(string path, string file)
+    private async Task Put(string path, string file, bool isRaw = false)
     {
         var method = new HttpMethod("PUT");
         var req = new HttpRequestMessage(method, prefix + path);
-        using (var content = new StreamContent(File.OpenRead(file)))
+        HttpResponseMessage res = new();
+        if (isRaw)
         {
+            var content = new StringContent(file);
             req.Content = content;
-            var res = await nextCloudClient.SendAsync(req);
-            res.EnsureSuccessStatusCode();
+            res = await nextcloudClient.SendAsync(req);
         }
+        else
+        {
+            var content = new StreamContent(File.OpenRead(file));
+            req.Content = content;
+            res = await nextcloudClient.SendAsync(req);
+        }
+        res.EnsureSuccessStatusCode();
         return;
+    }
+
+    private async Task Delete(string path)
+    {
+        var method = new HttpMethod("DELETE");
+        var req = new HttpRequestMessage(method, prefix + path);
+        var res = await nextcloudClient.SendAsync(req);
+        if (!res.IsSuccessStatusCode)
+        {
+            throw new StatusCodeException(res.StatusCode);
+        }
     }
 
     public void setSavePath(string path)
@@ -322,9 +352,9 @@ class NextcloudSyncProvider : SyncProvider
         Config.Instance.Nextcloud.SaveDir = path;
     }
 
-    private List<string> getContents(string path)
+    private async Task<List<string>> getContents(string path)
     {
-        List<string> contents = Propfind(path).Result;
+        List<string> contents = await Propfind(path);
         List<string> delete = new List<string>();
         contents.Remove(path);
         for (int i = 0; i < contents.Count; i++)
@@ -332,7 +362,7 @@ class NextcloudSyncProvider : SyncProvider
             // removes otherwise duplicate / in query
             if (contents[i].EndsWith("/"))
             {
-                var deeper = getContents(contents[i]);
+                var deeper = await getContents(contents[i]);
                 foreach (string element in deeper)
                 {
                     contents.Add(element);
@@ -380,24 +410,53 @@ class NextcloudSyncProvider : SyncProvider
 
     // SyncProvider Functions implemented here
 
-    public override Task DownloadFiles(Game game)
+    public override async Task DownloadFiles(Game game)
     {
+        // check if saveDir exists
+        DirectoryInfo saveDir = new(game.FullPath);
+        if (!saveDir.Exists)
+        {
+            saveDir.Create();
+        }
+        List<string> files = await ListFiles(game);
+
+        Regex includeRegex = new(game.IncludeRegex);
+        Regex excludeRegex = new(game.ExcludeRegex);
+
+        foreach (string file in files)
+        {
+            if (file != ".lastsync" && (!excludeRegex.IsMatch(file)) && includeRegex.IsMatch(file))
+            {
+                var content = await Get(Config.Instance.Nextcloud.SaveDir + "/" + game.Id + "/" + file);
+                // check if subdirectory
+                if (file.Contains('/'))
+                {
+                    DirectoryInfo fileDir = new(game.FullPath + "/" + file.Remove(file.LastIndexOf('/')));
+                    if (!fileDir.Exists) fileDir.Create();
+                }
+                FileInfo fileHandle = new(game.FullPath + "/" + file);
+                FileStream stream = fileHandle.OpenWrite();
+                await stream.WriteAsync(content);
+            }
+        }
         // check for dir on Nextcloud, create if it does not exist
         // Download all files from Nextcloud.Path to game.FullPath/
         // do not sync lastSyncFile
         // do not sync game.ExcludeRegex
         // do sync game.IncludeRegex
-        throw new NotImplementedException();
     }
 
-    public override Task<DateTime?> GetLastSyncTime(string gameId)
+    public override async Task<DateTime?> GetLastSyncTime(string gameId)
     {
-        // read .lastsync file on server -- maybe implement using metadata instead of content?
-        // parse data into DateTime format
-        return Task.FromResult<DateTime?>(null);
+        string path = Config.Instance.Nextcloud.SaveDir + "/" + gameId + "/.lastsync";
+        var content = await Get(path);
+        string data = Encoding.UTF8.GetString(content);
+        var lastSyncMillis = Convert.ToInt64(data);
+        var lastSync = new DateTime(lastSyncMillis);
+        return lastSync;
     }
 
-    public override Task<SpaceUsage> GetSpaceUsage()
+    public override async Task<SpaceUsage> GetSpaceUsage()
     {
         // easier to implement using OCS instead of WebDav
         // return free space from the quota
@@ -412,8 +471,8 @@ class NextcloudSyncProvider : SyncProvider
         client.DefaultRequestHeaders.Add("OCS-APIRequest", "true");
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authString);
 
-        var res = client.GetAsync(ocs).Result;
-        string content = res.Content.ReadAsStringAsync().Result;
+        var res = await client.GetAsync(ocs);
+        string content = await res.Content.ReadAsStringAsync();
 
         List<XElement> quotaData = XElement.Parse(content).Elements("data").Elements("quota").ToList();
 
@@ -421,19 +480,22 @@ class NextcloudSyncProvider : SyncProvider
         usage.TotalSpace = Convert.ToUInt64(quotaData.Elements("total").ToList()[0].Value);
         usage.FreeSpace = Convert.ToUInt64(quotaData.Elements("free").ToList()[0].Value);
 
-        return Task.FromResult(usage);
+        return usage;
     }
 
-    public override Task<List<string>> ListFiles(Game game)
+    public override async Task<List<string>> ListFiles(Game game)
     {
-        List<string> contents = getContents(Config.Instance.Nextcloud.SaveDir + "/" + game.Id + "/");
-        return Task.FromResult(contents);
+        List<string> contents = await getContents(Config.Instance.Nextcloud.SaveDir + "/" + game.Id + "/");
+        for (int i = 0; i < contents.Count; i++)
+        {
+            contents[i] = contents[i].Remove(0, (Config.Instance.Nextcloud.SaveDir + "/" + game.Id + "/").Length);
+        }
+        return contents;
     }
 
     public override async Task UploadFiles(Game game, DateTime lastModTime)
     {
         string path = Config.Instance.Nextcloud.SaveDir + "/" + game.Id + "/";
-        await Mkcol(path);
         List<FileInfo> files = new();
         DirectoryInfo d = new DirectoryInfo(game.FullPath + "/");
         // recursive
@@ -448,7 +510,10 @@ class NextcloudSyncProvider : SyncProvider
             if (!dirs.Contains(relDir) && relDir != "") dirs.Add(relDir);
             paths.Add(filePath);
         }
-
+        // delete saveDir, doing this saves checking which files need to be deleted explicitly
+        await Delete(path);
+        // create saveDir and subDirs
+        await Mkcol(path);
         foreach (string dir in dirs)
         {
             await Mkcol(path + dir);
@@ -459,9 +524,7 @@ class NextcloudSyncProvider : SyncProvider
             await Put(path + file, game.FullPath + '/' + file);
         }
 
-        Console.WriteLine("break here");
-        // sync .lastsync file containing last sync time
-        // create the .lastsync file here and the put it
-        throw new NotImplementedException();
+        string now = lastModTime.Ticks.ToString();
+        await Put(path + ".lastsync", now, true);
     }
 }
