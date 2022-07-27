@@ -164,7 +164,7 @@ public class NextcloudConfig
 [SyncProviderID("Nextcloud")]
 class NextcloudSyncProvider : SyncProvider
 {
-    private HttpClient nextCloudClient;
+    private HttpClient nextcloudClient;
 
     private AuthenticationHeaderValue nextcloudCredentials;
 
@@ -223,9 +223,9 @@ class NextcloudSyncProvider : SyncProvider
 
     private void initClient()
     {
-        nextCloudClient = new HttpClient();
-        nextCloudClient.BaseAddress = uri;
-        nextCloudClient.DefaultRequestHeaders.Authorization = nextcloudCredentials;
+        nextcloudClient = new HttpClient();
+        nextcloudClient.BaseAddress = uri;
+        nextcloudClient.DefaultRequestHeaders.Authorization = nextcloudCredentials;
     }
 
     private void getUrl()
@@ -274,7 +274,7 @@ class NextcloudSyncProvider : SyncProvider
 
         var method = new HttpMethod("PROPFIND");
         var req = new HttpRequestMessage(method, prefix + path);
-        var res = await nextCloudClient.SendAsync(req);
+        var res = await nextcloudClient.SendAsync(req);
         string xmlString = await res.Content.ReadAsStringAsync();
 
         XDocument xml = XDocument.Parse(xmlString);
@@ -291,7 +291,7 @@ class NextcloudSyncProvider : SyncProvider
     {
         var method = new HttpMethod("MKCOL");
         var req = new HttpRequestMessage(method, prefix + path);
-        var res = await nextCloudClient.SendAsync(req);
+        var res = await nextcloudClient.SendAsync(req);
         if (res.StatusCode != HttpStatusCode.Created && res.StatusCode != HttpStatusCode.MethodNotAllowed)
         {
             throw new StatusCodeException(res.StatusCode);
@@ -304,16 +304,25 @@ class NextcloudSyncProvider : SyncProvider
         throw new NotImplementedException();
     }
 
-    public async Task Put(string path, string file)
+    public async Task Put(string path, string file, bool isRaw = false)
     {
         var method = new HttpMethod("PUT");
         var req = new HttpRequestMessage(method, prefix + path);
-        using (var content = new StreamContent(File.OpenRead(file)))
+        HttpResponseMessage res = new();
+        if (isRaw)
         {
+            var content = new StringContent(file);
             req.Content = content;
-            var res = await nextCloudClient.SendAsync(req);
-            res.EnsureSuccessStatusCode();
+            res = await nextcloudClient.SendAsync(req);
         }
+        else
+        {
+            var content = new StreamContent(File.OpenRead(file));
+            req.Content = content;
+            res = await nextcloudClient.SendAsync(req);
+        }
+
+        res.EnsureSuccessStatusCode();
         return;
     }
 
@@ -392,7 +401,7 @@ class NextcloudSyncProvider : SyncProvider
 
     public override Task<DateTime?> GetLastSyncTime(string gameId)
     {
-        // read .lastsync file on server -- maybe implement using metadata instead of content?
+        // read .lastsync file on server -- read the file into memory but don't save it
         // parse data into DateTime format
         return Task.FromResult<DateTime?>(null);
     }
@@ -460,8 +469,9 @@ class NextcloudSyncProvider : SyncProvider
         }
 
         Console.WriteLine("break here");
-        // sync .lastsync file containing last sync time
-        // create the .lastsync file here and the put it
-        throw new NotImplementedException();
+        string now = lastModTime.Ticks.ToString();
+        await Put(path + ".lastsync", now, true);
+
+        return;
     }
 }
