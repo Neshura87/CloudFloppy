@@ -153,7 +153,7 @@ public class NextcloudConfig
             {
                 using (StreamReader decryptReader = new(cryptoStream))
                 {
-                    return decryptReader.ReadToEndAsync().Result;
+                    return decryptReader.ReadToEnd();
                 }
             }
         }
@@ -322,9 +322,9 @@ class NextcloudSyncProvider : SyncProvider
         Config.Instance.Nextcloud.SaveDir = path;
     }
 
-    private List<string> getContents(string path)
+    private async Task<List<string>> getContents(string path)
     {
-        List<string> contents = Propfind(path).Result;
+        List<string> contents = await Propfind(path);
         List<string> delete = new List<string>();
         contents.Remove(path);
         for (int i = 0; i < contents.Count; i++)
@@ -332,7 +332,7 @@ class NextcloudSyncProvider : SyncProvider
             // removes otherwise duplicate / in query
             if (contents[i].EndsWith("/"))
             {
-                var deeper = getContents(contents[i]);
+                var deeper = await getContents(contents[i]);
                 foreach (string element in deeper)
                 {
                     contents.Add(element);
@@ -397,7 +397,7 @@ class NextcloudSyncProvider : SyncProvider
         return Task.FromResult<DateTime?>(null);
     }
 
-    public override Task<SpaceUsage> GetSpaceUsage()
+    public override async Task<SpaceUsage> GetSpaceUsage()
     {
         // easier to implement using OCS instead of WebDav
         // return free space from the quota
@@ -412,8 +412,8 @@ class NextcloudSyncProvider : SyncProvider
         client.DefaultRequestHeaders.Add("OCS-APIRequest", "true");
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authString);
 
-        var res = client.GetAsync(ocs).Result;
-        string content = res.Content.ReadAsStringAsync().Result;
+        var res = await client.GetAsync(ocs);
+        string content = await res.Content.ReadAsStringAsync();
 
         List<XElement> quotaData = XElement.Parse(content).Elements("data").Elements("quota").ToList();
 
@@ -421,13 +421,13 @@ class NextcloudSyncProvider : SyncProvider
         usage.TotalSpace = Convert.ToUInt64(quotaData.Elements("total").ToList()[0].Value);
         usage.FreeSpace = Convert.ToUInt64(quotaData.Elements("free").ToList()[0].Value);
 
-        return Task.FromResult(usage);
+        return usage;
     }
 
-    public override Task<List<string>> ListFiles(Game game)
+    public override async Task<List<string>> ListFiles(Game game)
     {
-        List<string> contents = getContents(Config.Instance.Nextcloud.SaveDir + "/" + game.Id + "/");
-        return Task.FromResult(contents);
+        List<string> contents = await getContents(Config.Instance.Nextcloud.SaveDir + "/" + game.Id + "/");
+        return contents;
     }
 
     public override async Task UploadFiles(Game game, DateTime lastModTime)
