@@ -439,11 +439,6 @@ class NextcloudSyncProvider : SyncProvider
                 await stream.WriteAsync(content);
             }
         }
-        // check for dir on Nextcloud, create if it does not exist
-        // Download all files from Nextcloud.Path to game.FullPath/
-        // do not sync lastSyncFile
-        // do not sync game.ExcludeRegex
-        // do sync game.IncludeRegex
     }
 
     public override async Task<DateTime?> GetLastSyncTime(string gameId)
