@@ -1,7 +1,7 @@
 using System.Text.Json;
 
 
-namespace GameSync;
+namespace CloudFloppy;
 
 public class Config
 {
@@ -15,7 +15,7 @@ public class Config
 		string xdgconfdir = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
 								?? home + "/.config";
 
-		string confpath = xdgconfdir + "/GameSync/config.json";
+		string confpath = xdgconfdir + "/CloudFloppy/config.json";
 
 		if (!File.Exists(confpath)) throw new Exception("Config file not found: " + confpath);
 

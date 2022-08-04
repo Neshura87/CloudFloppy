@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace GameSync;
+namespace CloudFloppy;
 
 public class RsyncConfig
 {

@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Net.Http.Headers;
 
 
-namespace GameSync;
+namespace CloudFloppy;
 
 public class StatusCodeException : Exception
 {

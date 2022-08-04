@@ -3,7 +3,7 @@ using System.Threading;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace GameSync;
+namespace CloudFloppy;
 
 public class SpaceUsage
 {

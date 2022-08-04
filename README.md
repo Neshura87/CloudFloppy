@@ -1,0 +1,3 @@
+# CloudFloppy
+This is App is designed to provide an easy-to-use way to sync non-Steam games on Linux Devices. Currently only an incomplete CLI exists but a GUI is planned and in the works.
+A List of currently supported Sync Platforms can be found [here](https://github.com/Neshura87/Game-Sync/blob/main/FEATURES.md) while a brief explanation for the config file can be found [here](https://github.com/Neshura87/Game-Sync/blob/main/CONFIG.md)
