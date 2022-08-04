@@ -2,7 +2,3 @@
 .vscode/
 bin/
 obj/
-
-# this file contains sensitive information DO NOT upload ANYWHERE
-/config.json
-*.code-workspace
