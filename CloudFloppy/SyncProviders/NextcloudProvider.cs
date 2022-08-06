@@ -50,7 +50,7 @@ public class NextcloudConfig
     }
 
     [JsonIgnore]
-    public string plainPassword
+    public string PlainPassword
     {
         get
         {
@@ -77,7 +77,7 @@ public class NextcloudConfig
 
     public bool hasCredentials()
     {
-        if (string.IsNullOrEmpty(plainPassword) || string.IsNullOrEmpty(Username))
+        if (string.IsNullOrEmpty(PlainPassword) || string.IsNullOrEmpty(Username))
         { return false; }
         else { return true; }
     }
@@ -94,8 +94,8 @@ public class NextcloudConfig
 
     public AuthenticationHeaderValue generateCredentials()
     {
-        if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(plainPassword)) { throw new NotImplementedException(); }
-        string authString = Username + ":" + plainPassword;
+        if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(PlainPassword)) { throw new NotImplementedException(); }
+        string authString = Username + ":" + PlainPassword;
         string auth = Convert.ToBase64String(Encoding.UTF8.GetBytes(authString));
         return new AuthenticationHeaderValue("Basic", auth);
     }
@@ -162,7 +162,7 @@ public class NextcloudConfig
 }
 
 [SyncProviderID("Nextcloud")]
-class NextcloudSyncProvider : SyncProvider
+public class NextcloudSyncProvider : SyncProvider
 {
     private HttpClient nextcloudClient;
 
@@ -241,7 +241,7 @@ class NextcloudSyncProvider : SyncProvider
         Config.Instance.Nextcloud.Username = Console.ReadLine();
 
         Console.WriteLine("Enter Nextcloud Password:");
-        Config.Instance.Nextcloud.plainPassword = Console.ReadLine();
+        Config.Instance.Nextcloud.PlainPassword = Console.ReadLine();
         nextcloudCredentials = Config.Instance.Nextcloud.generateCredentials();
     }
 
@@ -457,7 +457,7 @@ class NextcloudSyncProvider : SyncProvider
         // return free space from the quota
         string ocs = "ocs/v1.php/cloud/users/" + Config.Instance.Nextcloud.Username;
 
-        string credentials = Config.Instance.Nextcloud.Username + ":" + Config.Instance.Nextcloud.plainPassword;
+        string credentials = Config.Instance.Nextcloud.Username + ":" + Config.Instance.Nextcloud.PlainPassword;
         var authString = Convert.ToBase64String(Encoding.ASCII.GetBytes(credentials));
 
         using var client = new HttpClient();
