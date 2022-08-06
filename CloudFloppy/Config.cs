@@ -7,7 +7,7 @@ public class Config
 {
 	public static Config Instance;
 
-	public static void LoadConfig()
+	public static bool LoadConfig()
 	{
 		string home = Environment.GetEnvironmentVariable("HOME")
 				?? "/home/" + Environment.GetEnvironmentVariable("USER");
@@ -17,9 +17,23 @@ public class Config
 
 		string confpath = xdgconfdir + "/CloudFloppy/config.json";
 
-		if (!File.Exists(confpath)) throw new Exception("Config file not found: " + confpath);
+		if (!File.Exists(confpath)) return false;
 
 		Config.Instance = JsonSerializer.Deserialize<Config>(File.ReadAllText(confpath));
+		return true;
+	}
+
+	public void saveConfig()
+	{
+		string home = Environment.GetEnvironmentVariable("HOME")
+				?? "/home/" + Environment.GetEnvironmentVariable("USER");
+
+		string xdfconfdir = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
+								?? home + "/.config";
+
+		string confpath = xdfconfdir + "/CloudFloppy/config.json";
+
+		throw new NotImplementedException();
 	}
 
 	public Config()
@@ -42,5 +56,20 @@ public class Config
 		{
 			return true;
 		}
+	}
+
+	public Task AddGame(Game game)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task RemoveGame(string gameId)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task ModifyGame(Game game, string property, string newValue)
+	{
+		throw new NotImplementedException();
 	}
 }
