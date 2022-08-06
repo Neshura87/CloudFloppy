@@ -33,7 +33,9 @@ public class Config
 
 		string confpath = xdfconfdir + "/CloudFloppy/config.json";
 
-		throw new NotImplementedException();
+		Directory.CreateDirectory(Path.GetDirectoryName(confpath));
+
+		File.WriteAllText(confpath, JsonSerializer.Serialize(this));
 	}
 
 	public Config()
@@ -58,14 +60,14 @@ public class Config
 		}
 	}
 
-	public Task AddGame(Game game)
+	public void AddGame(Game game)
 	{
-		throw new NotImplementedException();
+		Games.Add(game);
 	}
 
-	public Task RemoveGame(string gameId)
+	public void RemoveGame(string gameId)
 	{
-		throw new NotImplementedException();
+		Games.RemoveAll(g => g.Id == gameId);
 	}
 
 	public Task ModifyGame(Game game, string property, string newValue)
