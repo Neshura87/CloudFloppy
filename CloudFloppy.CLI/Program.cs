@@ -68,7 +68,10 @@ class Program
 
 	static async Task<int> SyncAll(SyncAllOptions op)
 	{
-		Config.LoadConfig();
+		if(!Config.LoadConfig())
+		{
+			ConfigSetup.CreateConfig();
+		}
 
 		foreach (var game in Config.Instance.Games)
 			await Sync(game, false);
@@ -78,7 +81,10 @@ class Program
 
 	static async Task<int> Sync(SyncOptions op)
 	{
-		Config.LoadConfig();
+		if(!Config.LoadConfig())
+		{
+			ConfigSetup.CreateConfig();
+		}
 
 		foreach (string game in op.GameIDs.Distinct())
 		{
@@ -137,7 +143,10 @@ class Program
 
 	static async Task<int> List(ListOptions op)
 	{
-		Config.LoadConfig();
+		if(!Config.LoadConfig())
+		{
+			ConfigSetup.CreateConfig();
+		}
 
 		SyncProvider provider = SyncProvider.GetSyncProvider(Config.Instance.Provider);
 
@@ -154,7 +163,10 @@ class Program
 
 	static async Task<int> Run(RunOptions op)
 	{
-		Config.LoadConfig();
+		if(!Config.LoadConfig())
+		{
+			ConfigSetup.CreateConfig();
+		}
 		var game = Config.Instance.Games.FirstOrDefault(g => g.Id == op.GameID);
 		if (game == null)
 		{
