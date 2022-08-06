@@ -8,10 +8,10 @@
 
 	<ItemGroup>
 		<PackageReference Include="GtkSharp" Version="3.24.24.38" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\CloudFloppy\CloudFloppy.csproj" />
+		<EmbeddedResource Include="**\*.glade">
+			<LogicalName>%(Filename)%(Extension)</LogicalName>
+		</EmbeddedResource>
 	</ItemGroup>
 
 </Project>
